@@ -54,6 +54,8 @@ public class CLI {
     public var helpMessageGenerator: HelpMessageGenerator = DefaultHelpMessageGenerator()
     public var argumentListManipulators: [ArgumentListManipulator] = [OptionSplitter()]
     public var parser = Parser()
+	public var thrownError: Swift.Error?
+	public var handleErrorClosure: ((Swift.Error) -> Void)?
     
     /// Creates a new CLI
     ///
@@ -121,7 +123,12 @@ public class CLI {
             }
             exitStatus = Int32(error.exitStatus)
         } catch let error {
-            helpMessageGenerator.writeUnrecognizedErrorMessage(for: error, to: stderr)
+			thrownError = error
+			if let handleErrorClosure = handleErrorClosure {
+				handleErrorClosure(error)
+			} else {
+				helpMessageGenerator.writeUnrecognizedErrorMessage(for: error, to: stderr)
+			}
             exitStatus = 1
         }
         
